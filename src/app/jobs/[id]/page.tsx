@@ -48,7 +48,7 @@ export default async function JobDetailPage({
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50/80 to-slate-50">
-      <header className="border-b border-blue-100/60 bg-white/70 backdrop-blur-sm">
+      <header className="relative z-50 border-b border-blue-100/60 bg-white/70 backdrop-blur-sm">
         <div className="mx-auto max-w-5xl px-4 py-6 sm:px-6">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <Link

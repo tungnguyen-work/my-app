@@ -2,10 +2,10 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { FormEvent, useState } from "react";
+import { FormEvent, useMemo, useState } from "react";
 
 import { AuthActions } from "@/components/AuthActions";
-import { supabase } from "@/lib/supabase";
+import { createSupabaseBrowserClient } from "@/lib/supabase-browser";
 
 type JobFormState = {
   title: string;
@@ -27,6 +27,7 @@ const INITIAL_FORM: JobFormState = {
 
 export default function NewJobPage() {
   const router = useRouter();
+  const supabase = useMemo(() => createSupabaseBrowserClient(), []);
   const [form, setForm] = useState<JobFormState>(INITIAL_FORM);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -42,7 +43,7 @@ export default function NewJobPage() {
     } = await supabase.auth.getUser();
 
     if (authError || !user) {
-      setError("Bạn cần đăng nhập để đăng tin tuyển dụng.");
+      setError("Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại để đăng tin.");
       setIsSubmitting(false);
       return;
     }

@@ -1,11 +1,11 @@
 "use client";
 
-import { ChangeEvent, FormEvent, useState } from "react";
+import { ChangeEvent, FormEvent, useMemo, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect } from "react";
 import type { User } from "@supabase/supabase-js";
 
-import { supabase } from "@/lib/supabase";
+import { createSupabaseBrowserClient } from "@/lib/supabase-browser";
 
 type ApplyJobCardProps = {
   jobId: string;
@@ -32,6 +32,7 @@ export default function ApplyJobCard({
 }: ApplyJobCardProps) {
   const router = useRouter();
   const pathname = usePathname();
+  const supabase = useMemo(() => createSupabaseBrowserClient(), []);
   const [isOpen, setIsOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -40,6 +41,7 @@ export default function ApplyJobCard({
   const [form, setForm] = useState<ApplyFormState>(INITIAL_FORM);
   const [isDone, setIsDone] = useState(false);
   const [user, setUser] = useState<User | null>(null);
+  const [isAuthReady, setIsAuthReady] = useState(false);
 
   useEffect(() => {
     let mounted = true;
@@ -47,21 +49,26 @@ export default function ApplyJobCard({
     supabase.auth.getUser().then(({ data }) => {
       if (!mounted) return;
       setUser(data.user ?? null);
+      setIsAuthReady(true);
     });
 
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
+      setIsAuthReady(true);
     });
 
     return () => {
       mounted = false;
       subscription.unsubscribe();
     };
-  }, []);
+  }, [supabase]);
 
   function openModal() {
+    if (!isAuthReady) {
+      return;
+    }
     if (!user) {
       const next = pathname || "/";
       router.push(`/auth?next=${encodeURIComponent(next)}`);
@@ -173,6 +180,7 @@ export default function ApplyJobCard({
         <button
           type="button"
           onClick={openModal}
+          disabled={!isAuthReady}
           className="mt-4 inline-flex w-full items-center justify-center rounded-2xl bg-blue-600 px-4 py-3 text-sm font-semibold text-white shadow-sm shadow-blue-600/25 transition-colors hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2"
         >
           Ứng tuyển

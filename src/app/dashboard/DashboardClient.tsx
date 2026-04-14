@@ -69,6 +69,8 @@ export default function DashboardClient({
   const [statusByApplication, setStatusByApplication] = useState<Record<string, string>>(
     Object.fromEntries(applications.map((item) => [item.id, normalizeStatus(item.status)])),
   );
+  const [previewResumeUrl, setPreviewResumeUrl] = useState<string | null>(null);
+  const [previewCandidateName, setPreviewCandidateName] = useState<string>("");
   const [loadingResumeId, setLoadingResumeId] = useState<string | null>(null);
   const [updatingStatusId, setUpdatingStatusId] = useState<string | null>(null);
   const [errorByJob, setErrorByJob] = useState<Record<string, string | null>>({});
@@ -87,7 +89,7 @@ export default function DashboardClient({
 
   const totalApplicants = applications.length;
 
-  async function openResume(applicationId: string, jobId: string) {
+  async function openResume(applicationId: string, jobId: string, candidateName: string) {
     setErrorByJob((prev) => ({ ...prev, [jobId]: null }));
     setLoadingResumeId(applicationId);
     try {
@@ -96,7 +98,8 @@ export default function DashboardClient({
       if (!response.ok || !data.url) {
         throw new Error(data.error || "Không thể tạo liên kết CV.");
       }
-      window.open(data.url, "_blank", "noopener,noreferrer");
+      setPreviewCandidateName(candidateName);
+      setPreviewResumeUrl(data.url as string);
     } catch (error) {
       const message = error instanceof Error ? error.message : "Không thể mở CV.";
       setErrorByJob((prev) => ({ ...prev, [jobId]: message }));
@@ -266,7 +269,13 @@ export default function DashboardClient({
                               </select>
                               <button
                                 type="button"
-                                onClick={() => openResume(application.id, application.jobId)}
+                                onClick={() =>
+                                  openResume(
+                                    application.id,
+                                    application.jobId,
+                                    application.candidateName,
+                                  )
+                                }
                                 disabled={loadingResumeId === application.id}
                                 className="rounded-lg border border-blue-200 px-3 py-1.5 text-xs font-semibold text-blue-700 hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-70"
                               >
@@ -321,6 +330,43 @@ export default function DashboardClient({
           })
         )}
       </section>
+
+      {previewResumeUrl && (
+        <div className="fixed inset-0 z-[120] flex items-center justify-center bg-slate-900/70 p-1 sm:p-3">
+          <div className="flex h-[96vh] w-[99vw] max-w-[1600px] flex-col overflow-hidden rounded-xl bg-white shadow-xl sm:h-[94vh] sm:w-[97vw] sm:rounded-2xl">
+            <div className="flex items-center justify-between border-b border-slate-200 px-4 py-3">
+              <div>
+                <p className="text-sm font-semibold text-slate-800">CV ứng viên</p>
+                <p className="text-xs text-slate-500">{previewCandidateName}</p>
+              </div>
+              <div className="flex items-center gap-2">
+                <a
+                  href={previewResumeUrl}
+                  download
+                  className="rounded-lg border border-blue-200 px-3 py-1.5 text-xs font-semibold text-blue-700 hover:bg-blue-50"
+                >
+                  Tải xuống
+                </a>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setPreviewResumeUrl(null);
+                    setPreviewCandidateName("");
+                  }}
+                  className="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                >
+                  Đóng
+                </button>
+              </div>
+            </div>
+            <iframe
+              title="CV Preview"
+              src={`${previewResumeUrl}#zoom=300&view=FitH`}
+              className="h-full w-full bg-slate-100"
+            />
+          </div>
+        </div>
+      )}
     </>
   );
 }

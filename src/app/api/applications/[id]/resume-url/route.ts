@@ -5,9 +5,7 @@ import { createSupabaseServerClient } from "@/lib/supabase-server";
 type ApplicationOwnershipRow = {
   id: string | number;
   resume_url: string | null;
-  jobs: {
-    user_id: string | null;
-  } | null;
+  job_id: string | number | null;
 };
 
 export async function GET(
@@ -27,7 +25,7 @@ export async function GET(
 
   const { data, error } = await supabase
     .from("applications")
-    .select("id, resume_url, jobs!inner(user_id)")
+    .select("id, resume_url, job_id")
     .eq("id", id)
     .maybeSingle();
 
@@ -40,7 +38,21 @@ export async function GET(
   }
 
   const application = data as unknown as ApplicationOwnershipRow;
-  if (application.jobs?.user_id !== user.id) {
+  if (!application.job_id) {
+    return NextResponse.json({ error: "Application is missing job_id." }, { status: 400 });
+  }
+
+  const { data: jobData, error: jobError } = await supabase
+    .from("jobs")
+    .select("user_id")
+    .eq("id", String(application.job_id))
+    .maybeSingle();
+
+  if (jobError) {
+    return NextResponse.json({ error: jobError.message }, { status: 400 });
+  }
+
+  if (!jobData || jobData.user_id !== user.id) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 

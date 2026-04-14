@@ -6,9 +6,7 @@ const ALLOWED_STATUS = ["new", "reviewed", "interviewed", "rejected", "hired"];
 
 type ApplicationOwnershipRow = {
   id: string | number;
-  jobs: {
-    user_id: string | null;
-  } | null;
+  job_id: string | number | null;
 };
 
 export async function PATCH(
@@ -33,7 +31,7 @@ export async function PATCH(
 
   const { data, error } = await supabase
     .from("applications")
-    .select("id, jobs!inner(user_id)")
+    .select("id, job_id")
     .eq("id", id)
     .maybeSingle();
 
@@ -46,7 +44,21 @@ export async function PATCH(
   }
 
   const application = data as unknown as ApplicationOwnershipRow;
-  if (application.jobs?.user_id !== user.id) {
+  if (!application.job_id) {
+    return NextResponse.json({ error: "Application is missing job_id." }, { status: 400 });
+  }
+
+  const { data: jobData, error: jobError } = await supabase
+    .from("jobs")
+    .select("user_id")
+    .eq("id", String(application.job_id))
+    .maybeSingle();
+
+  if (jobError) {
+    return NextResponse.json({ error: jobError.message }, { status: 400 });
+  }
+
+  if (!jobData || jobData.user_id !== user.id) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
