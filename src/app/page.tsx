@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { AuthActions } from "@/components/AuthActions";
 import { JobBoard } from "@/components/JobBoard";
 import { getJobs } from "@/lib/jobs";
 
@@ -24,6 +25,7 @@ export default async function HomePage() {
             <span className="rounded-full bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm shadow-blue-600/25">
               {jobs.length} vị trí
             </span>
+            <AuthActions />
             <Link
               href="/jobs/new"
               className="rounded-full border border-blue-200 bg-white px-4 py-2 text-sm font-semibold text-blue-700 shadow-sm shadow-blue-900/5 transition-colors hover:bg-blue-50"

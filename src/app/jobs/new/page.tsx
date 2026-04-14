@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FormEvent, useState } from "react";
 
+import { AuthActions } from "@/components/AuthActions";
 import { supabase } from "@/lib/supabase";
 
 type JobFormState = {
@@ -60,13 +61,16 @@ export default function NewJobPage() {
     <div className="min-h-screen bg-gradient-to-b from-blue-50/80 to-slate-50">
       <main className="mx-auto max-w-3xl px-4 py-8 sm:px-6 lg:py-10">
         <div className="mb-4">
-          <Link
-            href="/"
-            className="inline-flex items-center gap-2 text-sm font-medium text-slate-600 hover:text-blue-700"
-          >
-            <span aria-hidden>←</span>
-            Quay lại trang chủ
-          </Link>
+          <div className="flex items-center justify-between gap-3">
+            <Link
+              href="/"
+              className="inline-flex items-center gap-2 text-sm font-medium text-slate-600 hover:text-blue-700"
+            >
+              <span aria-hidden>←</span>
+              Quay lại trang chủ
+            </Link>
+            <AuthActions />
+          </div>
         </div>
 
         <section className="rounded-2xl border border-blue-100/80 bg-white p-6 shadow-sm shadow-blue-900/5 sm:p-8">

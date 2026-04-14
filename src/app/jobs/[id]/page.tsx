@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { AuthActions } from "@/components/AuthActions";
 import ApplyJobCard from "./ApplyJobCard";
 import { getJobById } from "@/lib/jobs";
 
@@ -53,9 +54,12 @@ export default async function JobDetailPage({
               Quay lại
             </Link>
 
-            <span className="rounded-full bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm shadow-blue-600/25">
-              {job.type}
-            </span>
+            <div className="flex items-center gap-2">
+              <span className="rounded-full bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm shadow-blue-600/25">
+                {job.type}
+              </span>
+              <AuthActions />
+            </div>
           </div>
         </div>
       </header>
