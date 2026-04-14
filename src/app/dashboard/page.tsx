@@ -15,6 +15,8 @@ type JobRow = {
   type: string | null;
   salary: string | null;
   created_at?: string | null;
+  posted_at?: string | null;
+  postedAt?: string | null;
 };
 
 type ApplicationRow = {
@@ -39,9 +41,9 @@ export default async function DashboardPage() {
 
   const { data: jobsData, error: jobsError } = await supabase
     .from("jobs")
-    .select("id, title, company, location, type, salary, created_at")
+    .select("*")
     .eq("user_id", user.id)
-    .order("created_at", { ascending: false });
+    .order("id", { ascending: false });
 
   if (jobsError) {
     throw new Error(jobsError.message);
@@ -56,7 +58,7 @@ export default async function DashboardPage() {
       .from("applications")
       .select("*")
       .in("job_id", jobIds)
-      .order("created_at", { ascending: false });
+      .order("id", { ascending: false });
 
     if (applicationError) {
       throw new Error(applicationError.message);
@@ -71,7 +73,7 @@ export default async function DashboardPage() {
     location: job.location ?? "Remote",
     type: job.type ?? "Full-time",
     salary: job.salary ?? "Negotiable",
-    createdAt: job.created_at ?? null,
+    createdAt: job.created_at ?? job.posted_at ?? job.postedAt ?? null,
   }));
 
   const dashboardApplications = applications.map((application) => ({
@@ -88,14 +90,14 @@ export default async function DashboardPage() {
     <div className="min-h-screen bg-gradient-to-b from-blue-50/80 to-slate-50">
       <header className="border-b border-blue-100/60 bg-white/70 backdrop-blur-sm">
         <div className="mx-auto flex max-w-6xl flex-col gap-3 px-4 py-6 sm:flex-row sm:items-center sm:justify-between sm:px-6">
-          <div>
+          <Link href="/" className="inline-block">
             <p className="text-xs font-medium uppercase tracking-widest text-blue-600">
-              Dashboard
+              Minimal Job Board
             </p>
             <h1 className="mt-1 text-2xl font-semibold tracking-tight text-slate-900">
               Quản lý bài đăng của tôi
             </h1>
-          </div>
+          </Link>
           <div className="flex w-full flex-wrap items-center justify-end gap-2 sm:w-auto">
             <Link
               href="/jobs/new"
