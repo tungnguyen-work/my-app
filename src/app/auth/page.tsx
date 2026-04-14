@@ -16,7 +16,6 @@ export default function AuthPage() {
   const [password, setPassword] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [message, setMessage] = useState<string | null>(null);
 
   const nextPath = useMemo(() => {
     const next = searchParams.get("next");
@@ -27,7 +26,6 @@ export default function AuthPage() {
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError(null);
-    setMessage(null);
     setIsSubmitting(true);
 
     const supabase = createSupabaseBrowserClient();
@@ -47,8 +45,8 @@ export default function AuthPage() {
         return;
       }
 
-      setMessage("Tài khoản đã được tạo. Vui lòng kiểm tra email để xác nhận.");
-      setIsSubmitting(false);
+      router.push(`/auth/verify-email?email=${encodeURIComponent(normalizedEmail)}`);
+      router.refresh();
       return;
     }
 
@@ -148,15 +146,20 @@ export default function AuthPage() {
               />
             </div>
 
-            {error && (
-              <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
-                {error}
+            {mode === "signin" && (
+              <div className="-mt-1 text-right">
+                <Link
+                  href="/auth/forgot-password"
+                  className="text-sm font-medium text-blue-700 hover:text-blue-800"
+                >
+                  Quên mật khẩu?
+                </Link>
               </div>
             )}
 
-            {message && (
-              <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
-                {message}
+            {error && (
+              <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+                {error}
               </div>
             )}
 

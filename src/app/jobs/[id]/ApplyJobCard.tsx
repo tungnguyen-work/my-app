@@ -1,6 +1,9 @@
 "use client";
 
 import { ChangeEvent, FormEvent, useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
+import { useEffect } from "react";
+import type { User } from "@supabase/supabase-js";
 
 import { supabase } from "@/lib/supabase";
 
@@ -27,6 +30,8 @@ export default function ApplyJobCard({
   type,
   postedAtLabel,
 }: ApplyJobCardProps) {
+  const router = useRouter();
+  const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -34,8 +39,34 @@ export default function ApplyJobCard({
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [form, setForm] = useState<ApplyFormState>(INITIAL_FORM);
   const [isDone, setIsDone] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
+
+  useEffect(() => {
+    let mounted = true;
+
+    supabase.auth.getUser().then(({ data }) => {
+      if (!mounted) return;
+      setUser(data.user ?? null);
+    });
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
+
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
+  }, []);
 
   function openModal() {
+    if (!user) {
+      const next = pathname || "/";
+      router.push(`/auth?next=${encodeURIComponent(next)}`);
+      return;
+    }
     setIsOpen(true);
     setError(null);
     setSuccess(null);
@@ -76,6 +107,11 @@ export default function ApplyJobCard({
     event.preventDefault();
     setError(null);
     setSuccess(null);
+
+    if (!user) {
+      router.push(`/auth?next=${encodeURIComponent(pathname || "/")}`);
+      return;
+    }
 
     const fullName = form.fullName.trim();
     const email = form.email.trim();
@@ -141,6 +177,11 @@ export default function ApplyJobCard({
         >
           Ứng tuyển
         </button>
+        {!user && (
+          <p className="mt-2 text-xs text-slate-500">
+            Vui lòng đăng nhập để nộp hồ sơ cho vị trí này.
+          </p>
+        )}
 
         <div className="mt-4 rounded-2xl bg-slate-50 p-4 text-xs text-slate-600">
           <div className="flex items-center justify-between gap-3">
@@ -203,7 +244,7 @@ export default function ApplyJobCard({
                 </div>
               </div>
             ) : (
-            <form className="mt-5 space-y-4" onSubmit={handleSubmit}>
+              <form className="mt-5 space-y-4" onSubmit={handleSubmit}>
               <div>
                 <label htmlFor="fullName" className="text-sm font-medium text-slate-700">
                   Họ tên
@@ -277,7 +318,7 @@ export default function ApplyJobCard({
                   {isSubmitting ? "Đang gửi..." : "Gửi đơn"}
                 </button>
               </div>
-            </form>
+              </form>
             )}
           </div>
         </div>
