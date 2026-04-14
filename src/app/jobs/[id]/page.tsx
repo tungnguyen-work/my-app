@@ -2,7 +2,9 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { AuthActions } from "@/components/AuthActions";
+import { createSupabaseServerClient } from "@/lib/supabase-server";
 import ApplyJobCard from "./ApplyJobCard";
+import OwnerJobActions from "./OwnerJobActions";
 import { getJobById } from "@/lib/jobs";
 
 export const dynamic = "force-dynamic";
@@ -24,6 +26,10 @@ export default async function JobDetailPage({
   const { id } = await params;
   const normalizedId = decodeURIComponent(id).trim();
   const { job, error } = await getJobById(normalizedId);
+  const supabase = await createSupabaseServerClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
   if (error) {
     return (
@@ -38,6 +44,7 @@ export default async function JobDetailPage({
   }
 
   if (!job) notFound();
+  const isOwner = Boolean(user?.id && job.userId && user.id === job.userId);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50/80 to-slate-50">
@@ -102,6 +109,8 @@ export default async function JobDetailPage({
                 {job.description}
               </p>
             </div>
+
+            {isOwner && <OwnerJobActions jobId={job.id} />}
           </section>
 
           <aside className="space-y-4 lg:sticky lg:top-8">

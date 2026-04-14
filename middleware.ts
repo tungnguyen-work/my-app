@@ -5,7 +5,11 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 
 function isProtectedPath(pathname: string) {
-  return pathname.startsWith("/jobs/new");
+  return (
+    pathname.startsWith("/jobs/new") ||
+    pathname.startsWith("/jobs/") && pathname.endsWith("/edit") ||
+    pathname.startsWith("/dashboard")
+  );
 }
 
 export async function middleware(request: NextRequest) {

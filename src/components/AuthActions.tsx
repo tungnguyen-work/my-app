@@ -61,14 +61,20 @@ export function AuthActions() {
   }
 
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex flex-wrap items-center justify-end gap-2">
+      <Link
+        href="/dashboard"
+        className="rounded-full border border-blue-200 bg-white px-3 py-2 text-xs font-semibold text-blue-700 shadow-sm shadow-blue-900/5 transition-colors hover:bg-blue-50 sm:px-4 sm:text-sm"
+      >
+        Dashboard
+      </Link>
       <span className="hidden rounded-full bg-slate-100 px-3 py-2 text-xs font-medium text-slate-600 sm:inline-block">
         {user.email}
       </span>
       <button
         type="button"
         onClick={handleSignOut}
-        className="rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm shadow-slate-900/5 transition-colors hover:bg-slate-50"
+        className="rounded-full border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 shadow-sm shadow-slate-900/5 transition-colors hover:bg-slate-50 sm:px-4 sm:text-sm"
       >
         Đăng xuất
       </button>

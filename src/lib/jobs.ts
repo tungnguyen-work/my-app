@@ -13,6 +13,7 @@ type JobRow = {
   postedAt?: string | null;
   posted_at?: string | null;
   created_at?: string | null;
+  user_id?: string | null;
 };
 
 const ALLOWED_TYPES: Job["type"][] = [
@@ -39,6 +40,7 @@ function mapJob(row: JobRow): Job {
     salary: row.salary ?? "Negotiable",
     description: row.description ?? "No description provided.",
     postedAt: row.posted_at ?? row.postedAt ?? row.created_at ?? new Date().toISOString(),
+    userId: row.user_id ?? null,
   };
 }
 

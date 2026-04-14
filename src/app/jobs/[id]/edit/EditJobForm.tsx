@@ -4,35 +4,30 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FormEvent, useState } from "react";
 
-import { AuthActions } from "@/components/AuthActions";
 import { supabase } from "@/lib/supabase";
 
-type JobFormState = {
-  title: string;
-  company: string;
-  location: string;
-  salary: string;
-  type: "Full-time" | "Part-time";
-  description: string;
+type EditJobFormProps = {
+  jobId: string;
+  initialData: {
+    title: string;
+    company: string;
+    location: string;
+    salary: string;
+    type: "Full-time" | "Part-time" | "Contract" | "Internship";
+    description: string;
+  };
 };
 
-const INITIAL_FORM: JobFormState = {
-  title: "",
-  company: "",
-  location: "",
-  salary: "",
-  type: "Full-time",
-  description: "",
-};
+type EditFormState = EditJobFormProps["initialData"];
 
-export default function NewJobPage() {
+export default function EditJobForm({ jobId, initialData }: EditJobFormProps) {
   const router = useRouter();
-  const [form, setForm] = useState<JobFormState>(INITIAL_FORM);
+  const [form, setForm] = useState<EditFormState>(initialData);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  async function handleSubmit(e: FormEvent<HTMLFormElement>) {
-    e.preventDefault();
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
     setError(null);
     setIsSubmitting(true);
 
@@ -42,7 +37,7 @@ export default function NewJobPage() {
     } = await supabase.auth.getUser();
 
     if (authError || !user) {
-      setError("Bạn cần đăng nhập để đăng tin tuyển dụng.");
+      setError("Bạn cần đăng nhập để cập nhật bài đăng.");
       setIsSubmitting(false);
       return;
     }
@@ -54,18 +49,21 @@ export default function NewJobPage() {
       salary: form.salary.trim(),
       type: form.type,
       description: form.description.trim(),
-      user_id: user.id,
     };
 
-    const { error: insertError } = await supabase.from("jobs").insert(payload);
+    const { error: updateError } = await supabase
+      .from("jobs")
+      .update(payload)
+      .eq("id", jobId)
+      .eq("user_id", user.id);
 
-    if (insertError) {
-      setError(`Không thể đăng tin: ${insertError.message}`);
+    if (updateError) {
+      setError(`Không thể cập nhật bài đăng: ${updateError.message}`);
       setIsSubmitting(false);
       return;
     }
 
-    router.push("/");
+    router.push(`/jobs/${jobId}`);
     router.refresh();
   }
 
@@ -73,27 +71,24 @@ export default function NewJobPage() {
     <div className="min-h-screen bg-gradient-to-b from-blue-50/80 to-slate-50">
       <main className="mx-auto max-w-3xl px-4 py-8 sm:px-6 lg:py-10">
         <div className="mb-4">
-          <div className="flex items-center justify-between gap-3">
-            <Link
-              href="/"
-              className="inline-flex items-center gap-2 text-sm font-medium text-slate-600 hover:text-blue-700"
-            >
-              <span aria-hidden>←</span>
-              Quay lại trang chủ
-            </Link>
-            <AuthActions />
-          </div>
+          <Link
+            href={`/jobs/${jobId}`}
+            className="inline-flex items-center gap-2 text-sm font-medium text-slate-600 hover:text-blue-700"
+          >
+            <span aria-hidden>←</span>
+            Quay lại chi tiết công việc
+          </Link>
         </div>
 
         <section className="rounded-2xl border border-blue-100/80 bg-white p-6 shadow-sm shadow-blue-900/5 sm:p-8">
           <p className="text-xs font-medium uppercase tracking-widest text-blue-600">
-            Tạo tin mới
+            Quản lý bài đăng
           </p>
           <h1 className="mt-2 text-2xl font-semibold tracking-tight text-slate-900">
-            Đăng tin tuyển dụng
+            Chỉnh sửa tin tuyển dụng
           </h1>
           <p className="mt-1 text-sm text-slate-500">
-            Điền thông tin bên dưới để hiển thị tin tuyển dụng lên trang chủ.
+            Cập nhật nội dung để ứng viên hiểu rõ hơn về vị trí tuyển dụng.
           </p>
 
           <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
@@ -105,9 +100,8 @@ export default function NewJobPage() {
                 id="title"
                 required
                 value={form.title}
-                onChange={(e) => setForm((prev) => ({ ...prev, title: e.target.value }))}
+                onChange={(event) => setForm((prev) => ({ ...prev, title: event.target.value }))}
                 className="mt-1 w-full rounded-xl border border-blue-200 bg-white px-4 py-2.5 text-sm text-slate-800 outline-none ring-blue-600 placeholder:text-slate-400 focus:ring-2"
-                placeholder="VD: Frontend Developer (React)"
               />
             </div>
 
@@ -120,11 +114,10 @@ export default function NewJobPage() {
                   id="company"
                   required
                   value={form.company}
-                  onChange={(e) =>
-                    setForm((prev) => ({ ...prev, company: e.target.value }))
+                  onChange={(event) =>
+                    setForm((prev) => ({ ...prev, company: event.target.value }))
                   }
                   className="mt-1 w-full rounded-xl border border-blue-200 bg-white px-4 py-2.5 text-sm text-slate-800 outline-none ring-blue-600 placeholder:text-slate-400 focus:ring-2"
-                  placeholder="VD: Google"
                 />
               </div>
               <div>
@@ -135,11 +128,10 @@ export default function NewJobPage() {
                   id="location"
                   required
                   value={form.location}
-                  onChange={(e) =>
-                    setForm((prev) => ({ ...prev, location: e.target.value }))
+                  onChange={(event) =>
+                    setForm((prev) => ({ ...prev, location: event.target.value }))
                   }
                   className="mt-1 w-full rounded-xl border border-blue-200 bg-white px-4 py-2.5 text-sm text-slate-800 outline-none ring-blue-600 placeholder:text-slate-400 focus:ring-2"
-                  placeholder="VD: Ho Chi Minh City"
                 />
               </div>
             </div>
@@ -153,9 +145,8 @@ export default function NewJobPage() {
                   id="salary"
                   required
                   value={form.salary}
-                  onChange={(e) => setForm((prev) => ({ ...prev, salary: e.target.value }))}
+                  onChange={(event) => setForm((prev) => ({ ...prev, salary: event.target.value }))}
                   className="mt-1 w-full rounded-xl border border-blue-200 bg-white px-4 py-2.5 text-sm text-slate-800 outline-none ring-blue-600 placeholder:text-slate-400 focus:ring-2"
-                  placeholder="VD: $1000 - $1500"
                 />
               </div>
               <div>
@@ -165,25 +156,24 @@ export default function NewJobPage() {
                 <select
                   id="type"
                   value={form.type}
-                  onChange={(e) =>
+                  onChange={(event) =>
                     setForm((prev) => ({
                       ...prev,
-                      type: e.target.value as JobFormState["type"],
+                      type: event.target.value as EditFormState["type"],
                     }))
                   }
                   className="mt-1 w-full rounded-xl border border-blue-200 bg-white px-4 py-2.5 text-sm text-slate-800 outline-none ring-blue-600 focus:ring-2"
                 >
                   <option value="Full-time">Full-time</option>
                   <option value="Part-time">Part-time</option>
+                  <option value="Contract">Contract</option>
+                  <option value="Internship">Internship</option>
                 </select>
               </div>
             </div>
 
             <div>
-              <label
-                htmlFor="description"
-                className="text-sm font-medium text-slate-700"
-              >
+              <label htmlFor="description" className="text-sm font-medium text-slate-700">
                 Mô tả chi tiết
               </label>
               <textarea
@@ -191,11 +181,10 @@ export default function NewJobPage() {
                 required
                 rows={6}
                 value={form.description}
-                onChange={(e) =>
-                  setForm((prev) => ({ ...prev, description: e.target.value }))
+                onChange={(event) =>
+                  setForm((prev) => ({ ...prev, description: event.target.value }))
                 }
                 className="mt-1 w-full rounded-xl border border-blue-200 bg-white px-4 py-2.5 text-sm text-slate-800 outline-none ring-blue-600 placeholder:text-slate-400 focus:ring-2"
-                placeholder="Mô tả trách nhiệm công việc, yêu cầu và quyền lợi..."
               />
             </div>
 
@@ -205,14 +194,20 @@ export default function NewJobPage() {
               </div>
             )}
 
-            <div className="pt-2">
+            <div className="flex items-center gap-2 pt-2">
               <button
                 type="submit"
                 disabled={isSubmitting}
                 className="inline-flex items-center justify-center rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm shadow-blue-600/25 transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-70"
               >
-                {isSubmitting ? "Đang đăng..." : "Đăng tin"}
+                {isSubmitting ? "Đang lưu..." : "Lưu thay đổi"}
               </button>
+              <Link
+                href={`/jobs/${jobId}`}
+                className="inline-flex items-center justify-center rounded-xl border border-slate-200 px-5 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+              >
+                Hủy
+              </Link>
             </div>
           </form>
         </section>
@@ -220,4 +215,3 @@ export default function NewJobPage() {
     </div>
   );
 }
-

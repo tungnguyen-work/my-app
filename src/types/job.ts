@@ -7,4 +7,5 @@ export interface Job {
     salary: string;
     description: string;
     postedAt: string;
+    userId: string | null;
 }
