@@ -2,7 +2,9 @@ import Link from "next/link";
 import type { Job } from "@/types/job";
 
 function formatPosted(dateStr: string) {
-  const d = new Date(dateStr + "T12:00:00");
+  const base = dateStr.includes("T") ? dateStr : `${dateStr}T12:00:00`;
+  const d = new Date(base);
+  if (Number.isNaN(d.getTime())) return "không xác định";
   return d.toLocaleDateString("vi-VN", {
     day: "numeric",
     month: "short",

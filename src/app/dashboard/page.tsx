@@ -17,6 +17,8 @@ type JobRow = {
   created_at?: string | null;
   posted_at?: string | null;
   postedAt?: string | null;
+  is_closed?: boolean | null;
+  status?: string | null;
 };
 
 type ApplicationRow = {
@@ -74,6 +76,10 @@ export default async function DashboardPage() {
     type: job.type ?? "Full-time",
     salary: job.salary ?? "Negotiable",
     createdAt: job.created_at ?? job.posted_at ?? job.postedAt ?? null,
+    isClosed:
+      Boolean(job.is_closed) ||
+      job.status?.trim().toLowerCase() === "closed" ||
+      job.status?.trim().toLowerCase() === "filled",
   }));
 
   const dashboardApplications = applications.map((application) => ({

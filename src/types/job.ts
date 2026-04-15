@@ -8,4 +8,5 @@ export interface Job {
     description: string;
     postedAt: string;
     userId: string | null;
+    isClosed: boolean;
 }

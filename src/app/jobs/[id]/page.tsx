@@ -10,7 +10,9 @@ import { getJobById } from "@/lib/jobs";
 export const dynamic = "force-dynamic";
 
 function formatPosted(dateStr: string) {
-  const d = new Date(dateStr + "T12:00:00");
+  const base = dateStr.includes("T") ? dateStr : `${dateStr}T12:00:00`;
+  const d = new Date(base);
+  if (Number.isNaN(d.getTime())) return "không xác định";
   return d.toLocaleDateString("vi-VN", {
     day: "numeric",
     month: "short",
@@ -114,12 +116,21 @@ export default async function JobDetailPage({
           </section>
 
           <aside className="space-y-4 lg:sticky lg:top-8">
-            <ApplyJobCard
-              jobId={job.id}
-              company={job.company}
-              type={job.type}
-              postedAtLabel={formatPosted(job.postedAt)}
-            />
+            {job.isClosed ? (
+              <div className="rounded-2xl border border-amber-200 bg-amber-50 p-5 shadow-sm">
+                <h2 className="text-sm font-semibold text-amber-800">Đã nhận đủ hồ sơ</h2>
+                <p className="mt-1 text-xs text-amber-700">
+                  Nhà tuyển dụng đã tạm dừng nhận thêm ứng viên cho vị trí này.
+                </p>
+              </div>
+            ) : (
+              <ApplyJobCard
+                jobId={job.id}
+                company={job.company}
+                type={job.type}
+                postedAtLabel={formatPosted(job.postedAt)}
+              />
+            )}
 
             <div className="rounded-2xl border border-blue-100/80 bg-white p-5 shadow-sm shadow-blue-900/5">
               <h2 className="text-sm font-semibold text-slate-800">

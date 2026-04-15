@@ -11,6 +11,7 @@ type DashboardJob = {
   type: string;
   salary: string;
   createdAt: string | null;
+  isClosed: boolean;
 };
 
 type DashboardApplication = {
@@ -74,6 +75,10 @@ export default function DashboardClient({
   const [loadingResumeId, setLoadingResumeId] = useState<string | null>(null);
   const [updatingStatusId, setUpdatingStatusId] = useState<string | null>(null);
   const [errorByJob, setErrorByJob] = useState<Record<string, string | null>>({});
+  const [jobCloseState, setJobCloseState] = useState<Record<string, boolean>>(
+    Object.fromEntries(jobs.map((job) => [job.id, Boolean(job.isClosed)])),
+  );
+  const [updatingJobId, setUpdatingJobId] = useState<string | null>(null);
 
   const applicationsByJob = useMemo(() => {
     return applications.reduce<Record<string, DashboardApplication[]>>((acc, current) => {
@@ -130,6 +135,29 @@ export default function DashboardClient({
     }
   }
 
+  async function toggleJobCloseStatus(jobId: string, nextIsClosed: boolean) {
+    setErrorByJob((prev) => ({ ...prev, [jobId]: null }));
+    setUpdatingJobId(jobId);
+    try {
+      const response = await fetch(`/api/jobs/${jobId}/close-status`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ isClosed: nextIsClosed }),
+      });
+      const data = (await response.json()) as { error?: string };
+      if (!response.ok) {
+        throw new Error(data.error || "Không thể cập nhật trạng thái bài đăng.");
+      }
+      setJobCloseState((prev) => ({ ...prev, [jobId]: nextIsClosed }));
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Không thể cập nhật trạng thái bài đăng.";
+      setErrorByJob((prev) => ({ ...prev, [jobId]: message }));
+    } finally {
+      setUpdatingJobId(null);
+    }
+  }
+
   return (
     <>
       <div className="grid gap-3 sm:grid-cols-3 sm:gap-4">
@@ -172,6 +200,7 @@ export default function DashboardClient({
           </div>
         ) : (
           jobs.map((job) => {
+            const isClosed = jobCloseState[job.id] ?? job.isClosed;
             const allApplications = applicationsByJob[job.id] ?? [];
             const filteredApplications =
               statusFilter === "all"
@@ -200,6 +229,11 @@ export default function DashboardClient({
                     <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-medium text-blue-700">
                       {job.type}
                     </span>
+                    {isClosed && (
+                      <span className="rounded-full bg-amber-50 px-3 py-1 text-xs font-medium text-amber-700">
+                        Đã nhận đủ hồ sơ
+                      </span>
+                    )}
                     <Link
                       href={`/jobs/${job.id}`}
                       className="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50"
@@ -212,6 +246,18 @@ export default function DashboardClient({
                     >
                       Chỉnh sửa
                     </Link>
+                    <button
+                      type="button"
+                      onClick={() => toggleJobCloseStatus(job.id, !isClosed)}
+                      disabled={updatingJobId === job.id}
+                      className="rounded-lg border border-amber-200 px-3 py-1.5 text-xs font-semibold text-amber-700 hover:bg-amber-50 disabled:cursor-not-allowed disabled:opacity-70"
+                    >
+                      {updatingJobId === job.id
+                        ? "Đang cập nhật..."
+                        : isClosed
+                          ? "Mở lại nhận hồ sơ"
+                          : "Đánh dấu đã nhận đủ"}
+                    </button>
                   </div>
                 </div>
 

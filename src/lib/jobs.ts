@@ -14,6 +14,8 @@ type JobRow = {
   posted_at?: string | null;
   created_at?: string | null;
   user_id?: string | null;
+  is_closed?: boolean | null;
+  status?: string | null;
 };
 
 const ALLOWED_TYPES: Job["type"][] = [
@@ -31,6 +33,12 @@ function normalizeType(value: string | null): Job["type"] {
 }
 
 function mapJob(row: JobRow): Job {
+  const normalizedStatus = row.status?.trim().toLowerCase();
+  const isClosed =
+    Boolean(row.is_closed) ||
+    normalizedStatus === "closed" ||
+    normalizedStatus === "filled";
+
   return {
     id: String(row.id),
     title: row.title ?? "Untitled role",
@@ -41,6 +49,7 @@ function mapJob(row: JobRow): Job {
     description: row.description ?? "No description provided.",
     postedAt: row.posted_at ?? row.postedAt ?? row.created_at ?? new Date().toISOString(),
     userId: row.user_id ?? null,
+    isClosed,
   };
 }
 
@@ -58,7 +67,8 @@ export async function getJobs(): Promise<JobsResult> {
       return { jobs: [], error: message };
     }
 
-    return { jobs: (data as JobRow[]).map(mapJob), error: null };
+    const mappedJobs = (data as JobRow[]).map(mapJob);
+    return { jobs: mappedJobs.filter((job) => !job.isClosed), error: null };
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "Unknown error while loading jobs";
